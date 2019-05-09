@@ -100,10 +100,12 @@ ch_output_docs = Channel.fromPath("$baseDir/docs/output.md")
 /*
  * Create a channel for input read files
  */
+
 Channel
-    .fromPath( params.reads)
-    .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}" }
-    .into { read_files_fastqc; read_files_trimming }
+        .fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )
+        .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
+        .into { read_files_fastqc; read_files_star }
+}
 
 
 // Header log info
@@ -210,7 +212,7 @@ process star {
                 else  filename }
 
     input:
-    file reads from further_processed_reads_star
+    file reads from read_files_star
     file index from star_index.collect()
     file gtf from gtf_star.collect()
 
