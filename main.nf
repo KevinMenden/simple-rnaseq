@@ -54,7 +54,6 @@ Channel
  * STEP 1 - FastQC
  */
 process fastqc {
-    tag "${reads.baseName}"
     publishDir "${params.outdir}/fastqc", mode: 'copy',
         saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
 
@@ -77,7 +76,6 @@ process fastqc {
 if(!params.star_index){
 
     process makeSTARindex {
-        tag "${fasta.baseName}"
         publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
                 saveAs: { params.saveReference ? it : null }, mode: 'copy'
 
@@ -108,7 +106,6 @@ if(!params.star_index){
 
 
 process star {
-    tag "$prefix"
     publishDir "${params.outdir}/STAR", mode: 'copy',
             saveAs: {filename ->
                 if (filename.indexOf(".bam") == -1) "logs/$filename"
