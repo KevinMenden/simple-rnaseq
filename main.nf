@@ -44,7 +44,7 @@ if( params.gtf ){
  */
 
 Channel
-        .fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )
+        .fromFilePairs( params.reads, size: 2 )
         .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
         .into { read_files_fastqc; read_files_star }
 
@@ -88,13 +88,14 @@ if(!params.star_index){
 
 
 process star {
+    tag "$name"
     publishDir "${params.outdir}/STAR", mode: 'copy',
             saveAs: {filename ->
                 if (filename.indexOf(".bam") == -1) "logs/$filename"
                 else  filename }
 
     input:
-    file reads from read_files_star
+    set val(name), file(reads) from read_files_star
     file index from star_index.collect()
     file gtf from gtf_star.collect()
 
@@ -105,8 +106,6 @@ process star {
     file "*Log.out" into star_log
 
     script:
-    prefix = reads[0].toString() - ~/(.trimmed)?(\.fq)?(\.fastq)?(\.gz)?(\.processed)?(\.further_processed)?$/
-
 
     """
     STAR --genomeDir $index \\
@@ -116,7 +115,7 @@ process star {
         --outSAMtype BAM SortedByCoordinate \\
         --readFilesCommand zcat \\
         --runDirPerm All_RWX \\
-        --outFileNamePrefix $prefix \\
+        --outFileNamePrefix $name \\
         --outFilterMatchNmin ${params.min_aln_length}
     """
 }
